@@ -1,0 +1,54 @@
+
+create Table Project
+(
+Project_Id int primary key identity(1,1),
+name varchar(50) not null,
+creation_date date not null,
+project_status varchar(10) CHECK (project_status IN ('Open', 'Closed')),
+closing_date date not null
+);
+
+create Table Employee
+(
+Employee_Id int primary key identity(1,1),
+first_name varchar(50) not null,
+last_name varchar(50) not null
+);
+
+create table dbo.Project_employment
+(
+Business_Id int primary key identity(1,1),
+Project_Id int not null,
+Employee_Id int not null,
+Position_Id int not null,
+foreign key (Project_Id) references dbo.Project(Project_Id),
+foreign key (Employee_Id) references dbo.Employee(Employee_Id)
+foreign key(Position_Id) references dbo.Position(Position_Id)
+);
+
+create table Position 
+(
+Position_Id int primary key identity(1,1),
+position_name varchar(50) not null
+);
+
+
+create table Status
+(
+Status_Id int primary key identity(1,1),
+status_name varchar(30) not null
+);
+
+create table Task 
+(
+Task_Id int primary key identity(1,1),
+Business_Id int not null,
+Status_Id int not null,
+deadline date not null,
+Employee_Status_Id int not null,
+status_date date not null,
+taskName varchar(50) not null,
+foreign key (Business_Id) references dbo.Project_employment(Business_Id),
+foreign key (Status_Id) references dbo.Status(Status_Id),
+foreign key (Employee_status_Id) references dbo.Employee(Employee_Id)
+);

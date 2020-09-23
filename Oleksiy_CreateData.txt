@@ -1,0 +1,38 @@
+insert Employee values('Vasya','Pupkin');
+insert Employee values('Havrylo','Did');
+insert Employee values('Bogdan','Didyk');
+
+insert Position values('Head of project');
+insert Position values('Senior');
+insert Position values('Middle');
+insert Position values('Junior');
+
+insert Status values('Open');
+insert Status values('Completed');
+insert Status values('Has somethimg to do');
+insert Status values('Accepted');
+
+insert Project values('Streaming service','2020-04-20','2020-10-20','open');
+insert Project values('Educational portal','2020-02-11','2020-06-06','closed');
+insert Project values('Office software','2020-03-11','2020-08-07','closed');
+
+
+insert Project_employment values(1,1,2);
+insert Project_employment values(2,2,3);
+insert Project_employment values(2,1,1);
+insert Project_employment values(3,3,3);
+insert Project_employment values(2,2,2);
+insert Project_employment values(2,3,2);
+
+
+insert Task values(3,2,	'2020-06-15',2,	'2020-05-08', 'Create project architecture');
+insert Task values(3,4,	'2020-05-20',2,	'2020-05-07','Add MVC pattern');
+insert Task values(1,4,	'2020-05-20',1,	'2020-05-10','Create HTML&CSS backbone');
+insert Task values(3,1,	'2020-06-17',1,	'2020-06-12', 'Add navigation');
+insert Task values(3,4,	'2020-07-11',3,	'2020-07-03', 'Add unit tests');
+insert Task values(4,4,	'2020-08-09',3,	'2020-08-02', 'Add Exceptions');
+insert Task values(4,4, '2020-05-11',1, '2020-05-01','Make manual testing');
+insert Task values(2,4, '2020-08-15',3, '2020-08-08', 'Change UI framework');
+insert Task values(3,1, '2020-09-09',3, '2020-09-01', 'Change architecture');
+insert Task values(1,4, '2020-08-09',3, '2020-08-01', 'Change UI');
+

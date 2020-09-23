@@ -1,0 +1,177 @@
+
+/*1.*/
+select position_name, count(position_name) from Project_employment as pe left join Position p
+on pe.Position_Id = p.Position_Id
+group by position_name;*/
+
+/*2.*/
+select position_name from Position p
+where p.Position_Id not in (select Position_Id from Project_employment);
+
+/*3*/
+select * from Project_employment;
+select pe.Project_Id, p.name, pe.Position_Id, po.position_name, count(*)  from Project_employment pe
+left join Project p on p.Project_Id = pe.Project_Id
+left join Position po on po.Position_Id = pe.Position_Id
+group by pe.Project_Id, p.name, pe.Position_Id, po.position_name;
+
+/* 4*/
+select f.Project_Id, f.name, avg(f.c) from (select pe.Project_Id, p.name, pe.Employee_Id, count(*) c from Task t
+join Project_employment pe on t.Business_Id = pe.Business_Id
+join Project p on pe.Project_Id = p.Project_Id
+group by pe.Project_Id, p.name, pe.Employee_Id) as f
+group by f.Project_Id, f.name;
+
+/* 5 */
+
+select p.name, DateDiff(DAY,  p.creation_date, p.closing_date) from Project p;
+
+/* 6*/
+
+create function GetObj
+(
+)
+returns table
+as
+return
+(
+select f.Employee_Id, count(*) as c2 from (select pe.Employee_Id, count(*) as c from Task t
+left join Project_employment pe on pe.Business_Id = t.Business_Id
+left join Project p on pe.Project_Id = p.Project_Id
+group by pe.Employee_Id, t.Status_Id
+having Status_Id <> 4) as f
+group by f.Employee_Id);
+
+
+select p.Employee_Id, p.c2 from GetObj() p
+where p.c2 = (select min(p2.c2) from GetObj() p2);
+
+/* 7 */
+create function GetObjMax
+(
+)
+returns table
+as
+return
+(
+select f.Employee_Id, count(*) as c2 from (select pe.Employee_Id, count(*) as c from Task t
+left join Project_employment pe on pe.Business_Id = t.Business_Id
+left join Project p on pe.Project_Id = p.Project_Id
+where t.deadline < CONVERT(date, getdate())
+group by pe.Employee_Id, t.Status_Id) as f
+group by f.Employee_Id);
+
+select p.Employee_Id, p.c2 from GetObjMax() p
+where p.c2 = (select max(p2.c2) from GetObjMax() p2);
+
+
+/* 8 */
+
+Update Task
+set deadline = DATEADD(day, 5, deadline)
+where Task_Id in (
+select t1.Task_Id from Task t1
+where t1.Status_Id <> 4);
+
+/*9*/
+select p.Project_Id, p.name, count(*) as opened from Task t
+left join Project_employment pe on pe.Business_Id = t.Business_Id
+left join Project p on pe.Project_Id = p.Project_Id
+group by p.Project_Id, p.name, t.Status_Id
+having Status_Id = 1;
+
+/* 10 */
+
+CREATE FUNCTION Task10Id
+(
+)
+RETURNS TABLE AS RETURN
+(
+select p2.Project_Id as id, p2.m as minim, p2.d2 as d from 
+(select p1.Project_Id, min(p1.Status_Id) as m, max(p1.d1) as d2  from 
+(select p.Project_Id, t.Status_Id, max(t.deadline) as d1, count(*) as c from Project p
+left join Project_employment pe on pe.Project_Id= p.Project_Id
+left join Task t on t.Business_Id = pe.Business_Id
+group by p.Project_Id, t.Status_Id, t.deadline) as p1
+group by p1.Project_Id) as p2
+where p2.m = 4
+);
+
+update Project
+set project_status = 'closed',
+closing_date = res.d
+from (select * from Task10Id()
+) as res
+where res.id = Project.Project_Id;
+
+/*11*/
+
+CREATE FUNCTION Task11Id
+(
+)
+RETURNS table return
+(select t1.Project_Id, t1.Employee_Id, min(t1.Status_Id) as m from (select p.Project_Id, pe.Employee_Id, t.Status_Id from Task t
+left join Project_employment pe on pe.Business_Id = t.Business_Id
+left join Project p on pe.Project_Id = p.Project_Id
+group by p.Project_Id, pe.Employee_Id, t.Status_Id) as t1
+group by t1.Project_Id, t1.Employee_Id);
+
+select * from Task11Id() as t
+where t.m = 4;
+
+
+/* 12 */
+
+declare @index int;
+declare @projectId int;
+declare @businessTask int;
+declare @businessEmployee int;
+
+
+CREATE procedure GetTaskByName(
+@name varchar(50),
+@projectId int output,
+@id int output,
+@businessId int output
+)
+as 
+begin
+set @id = (select top 1 Task_Id from Task t
+left join Project_employment pe on pe.Business_Id = t.Business_Id
+left join Project p on pe.Project_Id = p.Project_Id
+where TaskName = @name);
+set @projectId = (select top 1 p.Project_Id from Task t
+left join Project_employment pe on pe.Business_Id = t.Business_Id
+left join Project p on pe.Project_Id = p.Project_Id
+where TaskName = @name);
+set @businessId = (select top 1 t.Business_Id from Task t
+left join Project_employment pe on pe.Business_Id = t.Business_Id
+left join Project p on pe.Project_Id = p.Project_Id
+where TaskName = @name);
+end;
+
+
+exec GetTaskByName 'Make manual testing', @projectId output, @index output, @businessTask output;
+select @index, @projectId, @businessTask;
+
+
+CREATE function GetSpecificWorker
+(@ProjectId integer
+)
+returns table
+as
+return
+(
+select pp.Project_Id, pp.Employee_Id, pp.b as business, pp.c as cnt from (select pe.Project_Id, pe.Employee_Id, pe.Business_Id as b, count(*) as c from Task t
+left join Project_employment pe on pe.Business_Id = t.Business_Id
+left join Project p on pe.Project_Id = p.Project_Id
+group by pe.Project_Id, pe.Employee_Id, pe.Business_Id
+) as pp
+where pp.Project_Id = @projectId
+);
+
+
+update Task
+set Business_Id = (select min(pii.business) from GetSpecificWorker(@projectId) as pii
+where pii.cnt = (select min(p3.cnt) from GetSpecificWorker(@projectId) p3))
+where Business_Id = @businessTask;
